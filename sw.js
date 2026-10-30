@@ -1,5 +1,5 @@
 /* Zero to Hero — safe offline cache. Page: network-first (always fresh when online). CDN libs: cache-first. */
-var V='z2h-v30',PAGE=['./','./index.html','./manifest.json'];
+var V='z2h-v31',PAGE=['./','./index.html','./manifest.json'];
 self.addEventListener('install',function(e){self.skipWaiting();e.waitUntil(caches.open(V).then(function(c){return Promise.all(PAGE.map(function(u){return c.add(u).catch(function(){})}))}))});
 self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(k){return Promise.all(k.filter(function(x){return x!==V&&/^z2h-/.test(x)}).map(function(x){return caches.delete(x)}))}).then(function(){return self.clients.claim()}))});
 self.addEventListener('fetch',function(e){var r=e.request;if(r.method!=='GET')return;var u=new URL(r.url);

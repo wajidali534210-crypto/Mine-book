@@ -608,10 +608,14 @@ async function loadLocalAI(){
  if(!navigator.gpu)throw fail('Is browser/device mein WebGPU available nahi. Chrome update karein; tab tak Instant AI (bina internet) kaam karta rahega.');
  if(location.protocol==='file:')throw fail('Offline model ke liye book ko HTTPS (GitHub Pages) ya localhost par kholein.');
  localLoading=true;var st=$('localStatus');if(st)st.textContent='⏳ Offline AI engine load ho raha hai…';
- try{var mod=null,srcs=['https://esm.sh/@mlc-ai/web-llm@0.2.86?bundle','https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.86/+esm'];
-  for(var i=0;i<srcs.length&&!mod;i++){try{mod=await import(srcs[i])}catch(e){}}
-  if(!mod||!mod.CreateMLCEngine)throw fail('WebLLM engine download nahi hua (internet check karein).');
-  localEngine=await mod.CreateMLCEngine(LOCAL_MODEL,{initProgressCallback:function(x){if(st)st.textContent='⬇️ '+(x.text||'Model load ho raha hai')+(typeof x.progress==='number'?' · '+Math.round(x.progress*100)+'%':'')}});
+ try{var srcs=['https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.86/+esm','https://esm.run/@mlc-ai/web-llm','https://esm.sh/@mlc-ai/web-llm@0.2.86?bundle'],lastE=null;
+  if(typeof window.createRequire==='undefined')window.createRequire=function(){return function(){return {}}};
+  for(var i=0;i<srcs.length&&!localEngine;i++){
+   try{if(st)st.textContent='⏳ Engine load ho raha hai ('+(i+1)+'/'+srcs.length+')…';
+    var mod=await import(srcs[i]);if(!mod||!mod.CreateMLCEngine)throw fail('WebLLM module adhoora.');
+    localEngine=await mod.CreateMLCEngine(LOCAL_MODEL,{initProgressCallback:function(x){if(st)st.textContent='⬇️ '+(x.text||'Model load ho raha hai')+(typeof x.progress==='number'?' · '+Math.round(x.progress*100)+'%':'')}})}
+   catch(e){lastE=e;localEngine=null}}
+  if(!localEngine)throw fail('Offline AI load nahi hua: '+String(lastE&&lastE.message||lastE||'internet check karein').slice(0,170));
   if(st)st.textContent='✅ Offline AI ready · '+LOCAL_MODEL+' · ab internet ke baghair bhi chalega';return localEngine
  }catch(e){localEngine=null;throw e}finally{localLoading=false}}
 async function localAnswer(sys,q,onD){var eng=localEngine||await loadLocalAI();var msgs=[{role:'system',content:sys.slice(0,4500)}].concat(hist.slice(-4).map(function(m){return {role:m.role,content:String(m.content).slice(0,1400)}}),[{role:'user',content:String(q).slice(0,2800)}]);
